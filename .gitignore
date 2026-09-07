@@ -1,0 +1,8 @@
+node_modules/
+.claude/
+.env
+aprendizado.md
+claude.md
+roadmap.md
+.agents/
+/src/generated/prisma
