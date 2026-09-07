@@ -30,6 +30,20 @@ const categoriesPutId = z.object({
   id: z.coerce.number({ message: "Valor invalido" }),
 });
 
+const categoriesDelId = z.object({
+  id: z.coerce.number({ message: "Valor Invalido" }),
+});
+
+const postTransaction = z.object({
+  userId: z.number().min(1, { message: "valor invalido" }),
+  valor: z
+    .number()
+    .positive({ message: "Valor invalido numero precisa ser positivo" }),
+  date: z.coerce.date(),
+  categoryId: z.number().min(1, { message: "Valor invalido" }),
+  type: z.enum(["INCOME", "EXPENSE"]),
+});
+
 app.post("/categories", async (req, res) => {
   // 2. A VALIDAÇÃO — aplica o molde em cima do dado real que chegou nessa requisição
   const resultado = categorySchema.safeParse(req.body);
@@ -55,7 +69,7 @@ app.post("/categories", async (req, res) => {
     ) {
       return res.status(400).json({ erro: "Usuário não encontrado" });
     }
-    return res.status(500).json({ erro: "Erro ao buscar usuário" });
+    return res.status(500).json({ erro: "Erro ao criar categoria" });
   }
 });
 
@@ -122,8 +136,70 @@ app.put("/categories/:id", async (req, res) => {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
-      return res.status(404).json({ erro: "Usuário não encontrado" });
+      return res.status(404).json({ erro: "Categoria não encontrada" });
+    } else {
+      return res.status(500).json({ erro: "Erro ao atualizar categoria" });
     }
+  }
+});
+
+app.delete("/categories/:id", async (req, res) => {
+  const resultadoId = categoriesDelId.safeParse(req.params);
+
+  if (!resultadoId.success) {
+    return res.status(400).json({ erro: resultadoId.error });
+  }
+  const { id } = resultadoId.data;
+
+  try {
+    const conect = await prisma.category.delete({
+      where: { id },
+    });
+    return res.status(200).json(conect);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return res.status(404).json({ erro: "ID não encontrado" });
+    } else {
+      return res.status(500).json({ erro: "Erro ao remover categoria" });
+    }
+  }
+});
+
+app.post("/transactions", async (req, res) => {
+  const resultado = postTransaction.safeParse(req.body);
+
+  if (!resultado.success) {
+    return res.status(400).json({ erro: resultado.error });
+  }
+
+  const { userId, valor, date, categoryId, type } = resultado.data;
+
+  try {
+    const conect = await prisma.transaction.create({
+      data: { userId, valor, date, categoryId, type },
+    });
+    return res.status(201).json(conect);
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      const mensagem =
+        (error.meta as any)?.driverAdapterError?.cause?.originalMessage ?? "";
+
+      if (mensagem.includes("categoryId")) {
+        return res.status(400).json({ erro: "Categoria não encontrada" });
+      }
+      if (mensagem.includes("userId")) {
+        return res.status(400).json({ erro: "Usuário não encontrado" });
+      }
+      return res.status(400).json({ erro: "Referência inválida" });
+    }
+
+    return res.status(500).json({ erro: "Erro ao criar transação" });
   }
 });
 
