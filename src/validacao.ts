@@ -62,3 +62,12 @@ export const postTransaction = z.object({
   type: z.enum(["INCOME", "EXPENSE"]),
 });
 
+export const registerSchema = z.object({
+  email: z.email("Valor invalido"),
+  password: z.string().min(8, { message: "Senha fora dos padrões" }),
+});
+
+export const loginSchema = z.object({
+  email: z.email("Valor invalido"),
+  password: z.string("Valor invalido"),
+});
