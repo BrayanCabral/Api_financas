@@ -5,6 +5,7 @@ import { registerSchema } from "../validacao";
 import { Prisma } from "../generated/prisma/client";
 import { User } from "../generated/prisma/client";
 import { loginSchema } from "../validacao";
+import jwt from "jsonwebtoken";
 
 const router = Router();
 
@@ -67,7 +68,10 @@ router.post("/login", async (req, res) => {
     if (!senha) {
       return res.status(401).json({ erro: "Credenciais invalidas" });
     }
-    return res.status(200).json("login efetuado");
+    const token = jwt.sign({ userId: conect.id }, process.env.JWT_SECRET!, {
+      expiresIn: "1h"
+    });
+    return res.status(200).json({token});
   } catch {
     return res
       .status(500)

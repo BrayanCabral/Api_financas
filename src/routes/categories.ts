@@ -9,10 +9,15 @@ import {
   categoriesPutId,
   categoriesDelId,
 } from "../validacao";
+import { autenticar } from "../middleware";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
+router.get("/middleware", autenticar, async (req, res) => {
+  return res.json({ message: "Chave Válida", userId: (req as any).userId });
+});
+
+router.post("/", autenticar, async (req, res) => {
   // 2. A VALIDAÇÃO — aplica o molde em cima do dado real que chegou nessa requisição
   const resultado = categorySchema.safeParse(req.body);
 
@@ -22,8 +27,8 @@ router.post("/", async (req, res) => {
   }
 
   // 4. Se chegou até aqui, o dado é válido — pega ele já validado
-  const { name, userId } = resultado.data;
-
+  const { name } = resultado.data;
+  const userId  = (req as any).userId;
   try {
     const conect = await prisma.category.create({
       data: { name, userId },
