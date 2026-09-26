@@ -12,12 +12,9 @@ const valorMonetario = z
 // 1. O MOLDE — definido uma vez, fora da rota (não depende de nenhuma requisição específica)
 export const categorySchema = z.object({
   name: z.string().min(3, { message: "Nome inválido" }),
-
 });
 
-export const categoryGetSchema = z.object({
-  userId: idNumericoCoagido,
-});
+export const categoryGetSchema = z.object({});
 
 export const categoriesGetId = z.object({
   id: idNumericoCoagido,
@@ -27,13 +24,9 @@ export const categoriesPutName = z.object({
   name: z.string().min(3, { message: "Valor invalido" }),
 });
 
-export const categoriesPutId = z.object({
-  id: idNumericoCoagido,
-});
+export const categoriesPutId = z.object({ id: idNumericoCoagido });
 
-export const categoriesDelId = z.object({
-  id: idNumericoCoagido,
-});
+export const categoriesDelId = z.object({ id: idNumericoCoagido });
 
 export const transactionGetSchema = z.object({
   userId: idNumericoCoagido,
