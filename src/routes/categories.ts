@@ -13,10 +13,6 @@ import { autenticar } from "../middleware";
 
 const router = Router();
 
-router.get("/middleware", autenticar, async (req, res) => {
-  return res.json({ message: "Chave Válida", userId: (req as any).userId });
-});
-
 router.post("/", autenticar, async (req, res) => {
   // 2. A VALIDAÇÃO — aplica o molde em cima do dado real que chegou nessa requisição
   const resultado = categorySchema.safeParse(req.body);
@@ -138,9 +134,21 @@ router.delete("/:id", autenticar, async (req, res) => {
   if (!resultadoId.success) {
     return res.status(400).json({ erro: resultadoId.error });
   }
-  const id = (req as any).userId;
-
+  const { id } = resultadoId.data;
+  const idUsuario = (req as any).userId;
   try {
+    const categoria = await prisma.category.findUnique({
+      where: { id },
+    });
+
+    if (categoria === null) {
+      return res.status(404).json({ erro: "Categoria não encontrada" });
+    }
+
+    if (categoria.userId !== idUsuario) {
+      return res.status(404).json({ erro: "Categoria não encontrada" });
+    }
+
     const conect = await prisma.category.delete({
       where: { id },
     });

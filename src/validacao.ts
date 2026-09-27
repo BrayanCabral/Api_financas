@@ -29,7 +29,7 @@ export const categoriesPutId = z.object({ id: idNumericoCoagido });
 export const categoriesDelId = z.object({ id: idNumericoCoagido });
 
 export const transactionGetSchema = z.object({
-  userId: idNumericoCoagido,
+  
 });
 
 export const transactionGetId = z.object({
@@ -48,7 +48,7 @@ export const transactionPutId = z.object({
 });
 
 export const postTransaction = z.object({
-  userId: idNumerico,
+  
   valor: valorMonetario,
   date: z.coerce.date(),
   categoryId: idNumerico,
