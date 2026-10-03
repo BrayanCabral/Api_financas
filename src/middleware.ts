@@ -24,11 +24,3 @@ export function autenticar(req: Request, res: Response, next: NextFunction) {
     return res.status(401).json({ erro: "Token inválido" });
   }
 }
-
-export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>,
-) {
-  return function (req: Request, res: Response, next: NextFunction) {
-    fn(req, res, next).catch(next);
-  };
-}

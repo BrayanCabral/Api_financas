@@ -6,3 +6,4 @@ claude.md
 roadmap.md
 .agents/
 /src/generated/prisma
+.ua/
