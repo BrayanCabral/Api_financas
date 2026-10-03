@@ -1,9 +1,11 @@
 import { z } from "zod";
 
-const idNumerico = z.number().min(1, { message: "Valor invalido" });
-const idNumericoCoagido = z.coerce
-  .number()
-  .min(1, { message: "Valor invalido" });
+const idNumerico = z.int32().min(1, {message : "Valor inválido"});
+const idNumericoCoagido = z.pipe(
+  z.coerce.number(),
+  z.int32().min(1, { message: "Valor invalido" }),
+);
+
 const valorMonetario = z
   .string()
   .regex(/^\d+(\.\d{1,2})?$/, { message: "Use o formato 0.00" })
