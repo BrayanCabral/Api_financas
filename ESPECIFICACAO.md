@@ -2,6 +2,8 @@
 
 Este documento descreve **o que cada rota deve fazer** — comportamento esperado, não sintaxe nem estrutura de código. A ideia é você desenhar a implementação sozinho a partir daqui; use isso como referência de consulta (o que aconteceria se a conversa com o Claude expirasse no meio do caminho).
 
+**Atualizado em 2026-09-27**: CRUD de `Category`/`Transaction`, autenticação JWT e isolamento por usuário (ownership) estão implementados e marcados como ✅ abaixo — as seções continuam aqui como registro da decisão, não como pendência. O que ainda falta de verdade: as duas regras de negócio no fim do documento (saldo e agregações) e os testes automatizados.
+
 ## Referência rápida — métodos do Prisma Client
 
 Cada operação de CRUD usa um método específico do `prisma.<model>.<método>(...)`:
@@ -19,12 +21,15 @@ Ponto importante que já vimos na prática: **`findUnique` não lança erro quan
 Convenção adotada até aqui (mantenha):
 - Chave de erro no JSON sempre `erro` (não `error`)
 - Validação de entrada sempre com Zod, sempre antes de qualquer chamada ao Prisma
-- Toda chamada ao Prisma dentro de `try/catch`
-- Status 400 = dado do cliente é inválido; 404 = recurso não existe; 500 = falha inesperada do servidor
+- Erro de validação do Zod (`!resultado.success`) responde direto com `return res.status(400).json({ erro: resultado.error })` — mantém o objeto completo do Zod, não vira `AppError`
+- Qualquer erro depois da validação (não encontrado, não é do usuário, erro do Prisma) usa `throw new AppError(statusCode, mensagem)` — nada de `try/catch` manual na rota. O `asyncHandler` intercepta e o `errorHandler` central (`src/errorHandler.ts`) decide a resposta, inclusive traduzindo os códigos do Prisma (`P2025`, `P2003`, `P2002`)
+- Rota protegida por autenticação usa o middleware `autenticar` (`src/middleware.ts`), que lê o JWT do header e disponibiliza `(req as any).userId`
+- Rota que opera sobre um registro específico (`:id`) sempre confere posse: busca o registro, e se não existir OU não pertencer ao `userId` do token, `throw new AppError(404, "...")` com a **mesma mensagem** nos dois casos (não vaza se o problema foi "não existe" ou "não é seu")
+- Status 400 = dado do cliente é inválido; 404 = recurso não existe (ou não é do usuário); 500 = falha inesperada do servidor
 
 ---
 
-## Category — o que falta
+## Category — ✅ implementado (CRUD completo, com auth + posse)
 
 ### `PUT /categories/:id` (atualizar)
 - **Entrada**: `id` vem do caminho (`req.params`); `name` (novo nome) vem do corpo (`req.body`)
@@ -56,7 +61,7 @@ Convenção adotada até aqui (mantenha):
 
 ---
 
-## Transaction — CRUD completo (nada implementado ainda)
+## Transaction — ✅ implementado (CRUD completo, com auth + posse)
 
 Mesmo padrão do `Category`, adaptado aos campos: `valor` (Decimal), `tipo` (`TransactionType`: `INCOME`/`EXPENSE`), `data` (DateTime), `userId`, `categoryId`.
 
@@ -101,7 +106,7 @@ Endpoint ainda a desenhar juntos — provavelmente algo como `GET /transactions/
 
 ---
 
-## Autenticação JWT (depois do CRUD de Transaction)
+## Autenticação JWT — ✅ implementado
 
 Alto nível, sem entrar em código:
 
@@ -117,9 +122,9 @@ Alto nível, sem entrar em código:
 - Se bater, gera um **token JWT** (pesquise a lib `jsonwebtoken`) e devolve pro cliente
 - Se não bater (email não existe OU senha errada), responde o **mesmo erro genérico** pros dois casos — pesquise por que não é boa prática diferenciar "email não existe" de "senha errada" nessa resposta
 
-### Depois disso: proteger as rotas existentes
-- Todas as rotas de `Category`/`Transaction` deixam de receber `userId` no corpo/query — passam a ler de um **middleware de autenticação** que decodifica o token JWT do header da requisição e descobre quem é o usuário logado
-- Esse é o momento de voltar e **remover** o `userId` manual que colocamos como solução temporária em todas as rotas — é o ponto que avisei lá no início do CRUD de categorias
+### Proteção das rotas existentes — ✅ feito
+- Todas as rotas de `Category`/`Transaction` pararam de receber `userId` no corpo/query — leem do middleware `autenticar`, que decodifica o token JWT do header e disponibiliza `(req as any).userId`
+- Toda rota por `:id` tem checagem de posse (busca o registro, compara o dono com o usuário do token, `404` idêntico se não existir ou não for do dono)
 
 ---
 
