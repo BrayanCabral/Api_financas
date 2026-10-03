@@ -12,6 +12,14 @@ export function errorHandler(
     return res.status(err.statusCode).json({ erro: err.message });
   }
 
+  if (
+    err instanceof SyntaxError &&
+    "type" in err &&
+    err.type === "entity.parse.failed"
+  ) {
+    return res.status(400).json({ erro: "JSON malformado" });
+  }
+
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     if (err.code === "P2025") {
       return res.status(404).json({ erro: "Registro não encontrado" });
