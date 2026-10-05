@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const idNumerico = z.int32().min(1, {message : "Valor inválido"});
+const idNumerico = z.int32().min(1, { message: "Valor inválido" });
 const idNumericoCoagido = z.pipe(
   z.coerce.number(),
   z.int32().min(1, { message: "Valor invalido" }),
@@ -30,9 +30,7 @@ export const categoriesPutId = z.object({ id: idNumericoCoagido });
 
 export const categoriesDelId = z.object({ id: idNumericoCoagido });
 
-export const transactionGetSchema = z.object({
-  
-});
+export const transactionGetSchema = z.object({});
 
 export const transactionGetId = z.object({
   id: idNumericoCoagido,
@@ -41,7 +39,7 @@ export const transactionGetId = z.object({
 export const transactionPutBody = z.object({
   valor: valorMonetario,
   type: z.enum(["INCOME", "EXPENSE"]),
-  date: z.coerce.date(),
+  date: z.pipe(z.iso.date(), z.coerce.date()),
   categoryId: idNumerico,
 });
 
@@ -50,9 +48,8 @@ export const transactionPutId = z.object({
 });
 
 export const postTransaction = z.object({
-  
   valor: valorMonetario,
-  date: z.coerce.date(),
+  date: z.pipe(z.iso.date(), z.coerce.date()),
   categoryId: idNumerico,
   type: z.enum(["INCOME", "EXPENSE"]),
 });
